@@ -9,7 +9,7 @@
 
 
 
-1(in-package :cl-py-generator)
+(in-package :cl-py-generator)
 
 ;; /dev/shm
 ;; p              .. linkedin account
@@ -137,14 +137,15 @@
 		   (log (dot (string "open website {}.")
 			     (format site)))
 		   (self._driver.get site)
-		   (dot (self.sel (string "#Login")) (send_keys (aref self._config (string "linkedin_user"))))
- 		   (dot (self.sel (string "#Password")) (send_keys (aref self._config (string "linkedin_password"))))
-		   (dot (self.selx  (string "//a[text()='Sign in']")) (click))))
+		   (dot (self.sel (string "#login-email")) (send_keys (aref self._config (string "linkedin_user"))))
+ 		   (dot (self.sel (string "#login-password")) (send_keys (aref self._config (string "linkedin_password"))))
+		   (dot (self.sel  (string "#login-submit")) (click))))
 		
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
+		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
  		))
 
 	 (setf l (LinkedIn config.config))
@@ -368,6 +369,17 @@ get_ipython().system_raw('ssh -N -A -t -oServerAliveInterval=15  -oStrictHostKey
 	  (colab.start_ssh)))))
   (write-source "/home/martin/stage/cl_ctl_linkedin/source/run_00_start" code)
   (write-source "/home/martin/stage/cl_ctl_linkedin/source/config.changeme" config-code)
-  (write-source "/dev/shm/s"
+  (write-source "/home/martin/stage/cl_ctl_linkedin/source/s"
 		`(do0
+		  
+		  (def run (linkedin)
+		    (setf self linkedin)
+		    (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/")))
 		)))
+
+;; # click on one of my connections (iterate through those, get name and link)
+;; self.sel('li.list-style-none').click()
+;; # listing "People also viewed" (iterate through those, get name, position, affiliation)
+;; self.sel('li.pv-browsemap-section__member-container')
+;; # see their connections
+;; self.sel('.pv-top-card-v2-section__connections')

@@ -65,11 +65,12 @@ class LinkedIn(SeleniumMixin):
         site="https://linkedin.com"
         log("open website {}.".format(site))
         self._driver.get(site)
-        self.sel("#Login").send_keys(self._config["linkedin_user"])
-        self.sel("#Password").send_keys(self._config["linkedin_password"])
-        self.selx("//a[text()='Sign in']").click()
+        self.sel("#login-email").send_keys(self._config["linkedin_user"])
+        self.sel("#login-password").send_keys(self._config["linkedin_password"])
+        self.sel("#login-submit").click()
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config
         self.open_linkedin()
+        self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
 l=LinkedIn(config.config)
