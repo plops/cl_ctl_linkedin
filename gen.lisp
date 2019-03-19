@@ -218,7 +218,7 @@
 			    (log (dot (string "connections of {}: {}.")
 				      (format row.name their_connection_link)))
 			    (setf (aref self._connections.at idx (string "their_connection_link")) their_connection_link)
-			    (self._connections.to_csv (str self._connections_fn))))))
+			    (self._connections.to_csv (str self._connections_fn))))) )
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
