@@ -98,7 +98,7 @@
 					  #+firefox (Firefox)
 					  #+chrome (Chrome)
 				      )
-			self._wait (selenium.webdriver.support.wait.WebDriverWait self._driver 2))
+			self._wait (selenium.webdriver.support.wait.WebDriverWait self._driver 5))
 		  (log (string "SeleniumMixin::__init__ finished")))
 	 	(def sel (self css)
 		  (log (dot (string "sel css={}")
@@ -155,8 +155,19 @@
 
 		(def get_connections (self)
 		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
-		  (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
-		  (self.wait_xpath_gone (string "//div[@class='artdeco-spinner']"))
+		  (try
+		   (while True
+		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+		     (log (string "scrolled down."))
+		     (setf start (current_milli_time))
+		     (self.wait_xpath_gone (string "//div[@class='artdeco-spinner']"))
+		     (if (< (- (current_milli_time) start) 120)
+			 (do0
+			  (log (string "spinner was probably never there. i think we loaded everything."))
+			  break)))
+		   ("selenium.common.exceptions.TimeoutException as e"
+		    (log (string "timeout waiting for spinner to disappear"))
+		    pass))
 		  (setf res (list))
 		    (for (s (self.selxs (string "//ul/li//a/span[contains (@class, 'card__name')]")))
 			 (res.append

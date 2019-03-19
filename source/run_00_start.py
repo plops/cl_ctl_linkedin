@@ -39,7 +39,7 @@ class SeleniumMixin(object):
     def __init__(self):
         log("SeleniumMixin::__init__")
         self._driver=selenium.webdriver.Firefox()
-        self._wait=selenium.webdriver.support.wait.WebDriverWait(self._driver, 2)
+        self._wait=selenium.webdriver.support.wait.WebDriverWait(self._driver, 5)
         log("SeleniumMixin::__init__ finished")
     def sel(self, css):
         log("sel css={}".format(css))
@@ -80,8 +80,18 @@ class LinkedIn(SeleniumMixin):
         self.sel("#login-submit").click()
     def get_connections(self):
         self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
-        self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-        self.wait_xpath_gone("//div[@class='artdeco-spinner']")
+        try:
+            while (True):
+                self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+                log("scrolled down.")
+                start=current_milli_time()
+                self.wait_xpath_gone("//div[@class='artdeco-spinner']")
+                if ( ((((current_milli_time())-(start)))<(120)) ):
+                    log("spinner was probably never there. i think we loaded everything.")
+                    break
+        except selenium.common.exceptions.TimeoutException as e:
+            log("timeout waiting for spinner to disappear")
+            pass
         res=[]
         for s in self.selxs("//ul/li//a/span[contains (@class, 'card__name')]"):
             res.append({("name"):(s.find_element_by_xpath("../span[contains (@class, 'card__name')]").text),("link"):(s.find_element_by_xpath("..").get_attribute("href")),("occupation"):(s.find_element_by_xpath("../span[contains (@class, 'card__occupation')]").text)})
