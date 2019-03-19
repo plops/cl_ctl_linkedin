@@ -103,10 +103,18 @@
 		  (log (dot (string "sel css={}")
 			    (format css)))
 		  (return (self._driver.find_element_by_css_selector css)))
+		(def sels (self css)
+		  (log (dot (string "sels css={}")
+			    (format css)))
+		  (return (self._driver.find_elements_by_css_selector css)))
 		(def selx (self xpath)
 		  (log (dot (string "sel xpath={}")
 			    (format xpath)))
 		  (return (self._driver.find_element_by_xpath xpath)))
+		(def selxs (self xpath)
+		  (log (dot (string "sel xpath={}")
+			    (format xpath)))
+		  (return (self._driver.find_elements_by_xpath xpath)))
 		(def wait_css_gone (self css)
 		  (log (dot (string "wait gone css={}") (format css)))
 		  (self._wait.until (selenium.webdriver.support.expected_conditions.invisibility_of_element_located
@@ -140,12 +148,31 @@
 		   (dot (self.sel (string "#login-email")) (send_keys (aref self._config (string "linkedin_user"))))
  		   (dot (self.sel (string "#login-password")) (send_keys (aref self._config (string "linkedin_password"))))
 		   (dot (self.sel  (string "#login-submit")) (click))))
+
+		(def get_connections (self)
+		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
+		  (setf res (list))
+		    (for (s (self.selxs (string "//ul/li//a/span[contains (@class, 'card__name')]")))
+			 (res.append
+			  (dict ((string "name")
+				 (dot s
+				      (find_element_by_xpath (string "../span[contains (@class, 'card__name')]"))
+				      text))
+				((string "link")
+				 (dot s
+				      (find_element_by_xpath (string ".."))
+				      (get_attribute (string "href"))))
+				((string "occupation")
+				 (dot s
+				      (find_element_by_xpath (string "../span[contains (@class, 'card__occupation')]"))
+				      text)))))
+		    (return res))
 		
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
-		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
+		  (setf self._connections (self.get_connections))
  		))
 
 	 (setf l (LinkedIn config.config))
@@ -374,8 +401,19 @@ get_ipython().system_raw('ssh -N -A -t -oServerAliveInterval=15  -oStrictHostKey
 		  
 		  (def run (linkedin)
 		    (setf self linkedin)
-		    (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/")))
-		)))
+					;(self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
+		    (setf res (list))
+		    (for (s (self.sels (string "li.list-style-none")))
+			 (res.append
+			  (dict ((string "name")
+				 (dot s
+				      (find_element_by_xpath (string "//span[contains (@class, 'card__name')]"))
+				      (text)))
+				((string "occupation")
+				 (dot s
+				      (find_element_by_xpath (string "//span[contains (@class, 'card__occupation')]"))
+				      (text))))))
+		    (return res)))))
 
 ;; # click on one of my connections (iterate through those, get name and link)
 ;; self.sel('li.list-style-none').click()

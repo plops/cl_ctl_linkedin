@@ -43,9 +43,15 @@ class SeleniumMixin(object):
     def sel(self, css):
         log("sel css={}".format(css))
         return self._driver.find_element_by_css_selector(css)
+    def sels(self, css):
+        log("sels css={}".format(css))
+        return self._driver.find_elements_by_css_selector(css)
     def selx(self, xpath):
         log("sel xpath={}".format(xpath))
         return self._driver.find_element_by_xpath(xpath)
+    def selxs(self, xpath):
+        log("sel xpath={}".format(xpath))
+        return self._driver.find_elements_by_xpath(xpath)
     def wait_css_gone(self, css):
         log("wait gone css={}".format(css))
         self._wait.until(selenium.webdriver.support.expected_conditions.invisibility_of_element_located((selenium.webdriver.common.by.By.CSS_SELECTOR,css,)))
@@ -68,9 +74,15 @@ class LinkedIn(SeleniumMixin):
         self.sel("#login-email").send_keys(self._config["linkedin_user"])
         self.sel("#login-password").send_keys(self._config["linkedin_password"])
         self.sel("#login-submit").click()
+    def get_connections(self):
+        self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
+        res=[]
+        for s in self.selxs("//ul/li//a/span[contains (@class, 'card__name')]"):
+            res.append({("name"):(s.find_element_by_xpath("../span[contains (@class, 'card__name')]").text),("link"):(s.find_element_by_xpath("..").get_attribute("href")),("occupation"):(s.find_element_by_xpath("../span[contains (@class, 'card__occupation')]").text)})
+        return res
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config
         self.open_linkedin()
-        self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
+        self._connections=self.get_connections()
 l=LinkedIn(config.config)
