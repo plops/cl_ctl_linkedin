@@ -109,11 +109,13 @@ class LinkedIn(SeleniumMixin):
         return pd.DataFrame(res)
     def get_their_connections(self):
         for idx, row in self._connections.iterrows():
-            self._driver.get(row.link)
-            their_connection_link=self.selx("//span[contains(@class,'section__connections')]/..").get_property("href")
-            log("connections of {}: {}.".format(row.name, their_connection_link))
-            self._connections.at[idx,"their_connection_link"]=their_connection_link
-            self._connections.to_csv(str(self._connections_fn))
+            if ( pd.isnull(row.their_connection_link) ):
+                log("connection link of {} not yet known. try to get it.".format(row.name))
+                self._driver.get(row.link)
+                their_connection_link=self.selx("//span[contains(@class,'section__connections')]/..").get_property("href")
+                log("connections of {}: {}.".format(row.name, their_connection_link))
+                self._connections.at[idx,"their_connection_link"]=their_connection_link
+                self._connections.to_csv(str(self._connections_fn))
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config
