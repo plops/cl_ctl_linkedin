@@ -10,6 +10,7 @@ import selenium.webdriver.support
 import selenium.webdriver.support.ui
 import selenium.webdriver.support.wait
 import selenium.webdriver.support.expected_conditions
+import pandas as pd
 def current_milli_time():
     return int(round(((1000)*(time.time()))))
 global g_last_timestamp
@@ -57,6 +58,9 @@ class SeleniumMixin(object):
         self._wait.until(selenium.webdriver.support.expected_conditions.invisibility_of_element_located((selenium.webdriver.common.by.By.CSS_SELECTOR,css,)))
     def wait_css_clickable(self, css):
         self._wait.until(selenium.webdriver.support.expected_conditions.element_to_be_clickable((selenium.webdriver.common.by.By.CSS_SELECTOR,css,)))
+    def wait_xpath_gone(self, xpath):
+        log("wait gone xpath={}".format(xpath))
+        self._wait.until(selenium.webdriver.support.expected_conditions.invisibility_of_element_located((selenium.webdriver.common.by.By.XPATH,xpath,)))
     def wait_xpath_clickable(self, xpath):
         log("wait clickable xpath={}".format(xpath))
         self._wait.until(selenium.webdriver.support.expected_conditions.element_to_be_clickable((selenium.webdriver.common.by.By.XPATH,xpath,)))
@@ -76,10 +80,12 @@ class LinkedIn(SeleniumMixin):
         self.sel("#login-submit").click()
     def get_connections(self):
         self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
+        self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        self.wait_xpath_gone("//div[@class='artdeco-spinner']")
         res=[]
         for s in self.selxs("//ul/li//a/span[contains (@class, 'card__name')]"):
             res.append({("name"):(s.find_element_by_xpath("../span[contains (@class, 'card__name')]").text),("link"):(s.find_element_by_xpath("..").get_attribute("href")),("occupation"):(s.find_element_by_xpath("../span[contains (@class, 'card__occupation')]").text)})
-        return res
+        return pd.DataFrame(res)
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config

@@ -39,7 +39,8 @@
 		   selenium.webdriver.support.expected_conditions
 					;selenium.webdriver.firefox
 		   ;pyperclip
-		   ;subprocess
+					;subprocess
+		   (pd pandas)
 		   ))
 
 
@@ -124,7 +125,10 @@
 		  (self._wait.until (selenium.webdriver.support.expected_conditions.element_to_be_clickable
                                (tuple selenium.webdriver.common.by.By.CSS_SELECTOR
                                       css))))
-
+		(def wait_xpath_gone (self xpath)
+		  (log (dot (string "wait gone xpath={}") (format xpath)))
+		  (self._wait.until (selenium.webdriver.support.expected_conditions.invisibility_of_element_located
+                               (tuple selenium.webdriver.common.by.By.XPATH xpath))))
 		(def wait_xpath_clickable (self xpath)
 		  (log (dot (string "wait clickable xpath={}") (format xpath)))
 		  (self._wait.until (selenium.webdriver.support.expected_conditions.element_to_be_clickable
@@ -151,6 +155,8 @@
 
 		(def get_connections (self)
 		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
+		  (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+		  (self.wait_xpath_gone (string "//div[@class='artdeco-spinner']"))
 		  (setf res (list))
 		    (for (s (self.selxs (string "//ul/li//a/span[contains (@class, 'card__name')]")))
 			 (res.append
@@ -166,7 +172,7 @@
 				 (dot s
 				      (find_element_by_xpath (string "../span[contains (@class, 'card__occupation')]"))
 				      text)))))
-		    (return res))
+		    (return (pd.DataFrame res)))
 		
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
