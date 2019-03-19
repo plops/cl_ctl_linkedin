@@ -27,7 +27,7 @@
 	 (imports (sys
 		   time
 		   config
-		   ;pathlib
+		   pathlib
 		   selenium
 		   selenium.webdriver
 		   selenium.webdriver.common
@@ -155,6 +155,26 @@
 
 		(def get_connections (self)
 		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
+		  (setf self._connections_fn (pathlib.Path (string "connections.csv")))
+		  (if (dot self._connections_fn (exists))
+		      (do0
+		       (log (string "connections.csv exists. try to load data from there."))
+		       (setf df (pd.read_csv (str self._connections_fn))
+			     page_connections_number (int (dot (self.selx (string "//header[@class='mn-connections__header']/h1"))
+							       text
+							       (aref (split  (string " ")) 0)
+							       )))
+		       (if (== (len df) page_connections_number)
+			   (do0
+			    (log (dot (string "the stored file contains {} connections. same as the website.")
+				      (format page_connections_number)))
+			    (return df))
+			   (do0
+			    (log (dot (string "the stored file contains {} connections. the website contains {}. load from website")
+				      (format (len df) page_connections_number)))))))
+
+		  ;;int(l.selx("//header[@class='mn-connections__header']/h1").text.split(' ')[0])
+		  
 		  (try
 		   (while True
 		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
@@ -184,12 +204,24 @@
 				      (find_element_by_xpath (string "../span[contains (@class, 'card__occupation')]"))
 				      text)))))
 		    (return (pd.DataFrame res)))
-		
+		(def get_their_connections (self)
+		  ;;l.selx("//span[contains(@class,'section__connections')]/..").get_property('href')
+		  (for ((ntuple idx row) (self._connections.iterrows))
+		       (self._driver.get row.link)
+		       (setf their_connection_link (dot
+						    (self.selx (string "//span[contains(@class,'section__connections')]/.."))
+						    (get_property (string "href"))))
+		       (log (dot (string "connections of {}: {}.")
+				 (format row.name their_connection_link)))
+		       (setf (aref self._connections.at idx (string "their_connection_link")) their_connection_link)
+		       (self._connections.to_csv (str self._connections_fn)))
+		  )
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
+		  (self.get_their_connections)
  		))
 
 	 (setf l (LinkedIn config.config))

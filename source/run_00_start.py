@@ -1,6 +1,7 @@
 import sys
 import time
 import config
+import pathlib
 import selenium
 import selenium.webdriver
 import selenium.webdriver.common
@@ -80,6 +81,16 @@ class LinkedIn(SeleniumMixin):
         self.sel("#login-submit").click()
     def get_connections(self):
         self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
+        self._connections_fn=pathlib.Path("connections.csv")
+        if ( self._connections_fn.exists() ):
+            log("connections.csv exists. try to load data from there.")
+            df=pd.read_csv(str(self._connections_fn))
+            page_connections_number=int(self.selx("//header[@class='mn-connections__header']/h1").text.split(" ")[0])
+            if ( ((len(df))==(page_connections_number)) ):
+                log("the stored file contains {} connections. same as the website.".format(page_connections_number))
+                return df
+            else:
+                log("the stored file contains {} connections. the website contains {}. load from website".format(len(df), page_connections_number))
         try:
             while (True):
                 self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
@@ -96,9 +107,17 @@ class LinkedIn(SeleniumMixin):
         for s in self.selxs("//ul/li//a/span[contains (@class, 'card__name')]"):
             res.append({("name"):(s.find_element_by_xpath("../span[contains (@class, 'card__name')]").text),("link"):(s.find_element_by_xpath("..").get_attribute("href")),("occupation"):(s.find_element_by_xpath("../span[contains (@class, 'card__occupation')]").text)})
         return pd.DataFrame(res)
+    def get_their_connections(self):
+        for idx, row in self._connections.iterrows():
+            self._driver.get(row.link)
+            their_connection_link=self.selx("//span[contains(@class,'section__connections')]/..").get_property("href")
+            log("connections of {}: {}.".format(row.name, their_connection_link))
+            self._connections.at[idx,"their_connection_link"]=their_connection_link
+            self._connections.to_csv(str(self._connections_fn))
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config
         self.open_linkedin()
         self._connections=self.get_connections()
+        self.get_their_connections()
 l=LinkedIn(config.config)
