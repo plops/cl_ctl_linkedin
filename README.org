@@ -1,0 +1,6 @@
+
+* Introduction
+
+- use selenium to download linkedin connections
+- store data in csv files
+- perhaps eventually import into https://franz.com/agraph/downloads/server
