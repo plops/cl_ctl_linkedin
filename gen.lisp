@@ -243,7 +243,8 @@
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//a").get_property('href')
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//span[contains(@class,'actor-name')]").text
 		  (setf res (list))
-		  (for (p (range 1 (+ 1 number_of_pages)))
+		  (for (p (list 1); (range 1 (+ 1 number_of_pages))
+			  )
 		       (if (< 1 p)
 			   (do0
 			    (log (dot (string "go to page {}/{}")
@@ -252,16 +253,25 @@
 						   (format (dot (aref self._connections (string "their_connection_link"))
 								(aref iloc idx))
 							   p)))))
+		       ;; in javascript console
+		       ;; b = $x(("//ul[contains(@class,'search-results__list')]/li"))
+		       ;; document.evaluate( 'count(//p)', b[9], null, XPathResult.ANY_TYPE, null );
 		       (setf elems (self.selxs (string "//ul[contains(@class,'search-results__list')]/li")))
 		       (for (e elems) ;; FIXME: i don't think this is iterating all the list elements
-			    (setf link (dot e (find_element_by_xpath (string "//a"))
+			    (setf link (dot e (find_element_by_xpath (string ".//a"))
 					    (get_property (string "href")))
-				  name (dot e (find_element_by_xpath (string "//span[contains(@class,'actor-name')]"))
-					    text))
+				  name (dot e (find_element_by_xpath (string ".//span[contains(@class,'actor-name')]"))
+					    text)
+				  job (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-1')]/span"))
+					   text)
+				  place (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-2')]/span"))
+					   text))
 			    (res.append (dict ((string "my_name") (aref self._connections.name.iloc idx))
 					      ((string "my_idx") idx)
 					      ((string "other_link") link)
 					      ((string "other_name") name)
+					      ((string "other_job") job)
+					      ((string "other_place") place)
 					      ((string "page") p))))
 		       (do0
 			(setf fn (dot (string "other_{:04d}_{}")
@@ -278,7 +288,8 @@
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
-		  (for ((ntuple idx row) (self._connections.iterrows))
+		  (self.get_her_connections 0)
+		  #+nil(for ((ntuple idx row) (self._connections.iterrows))
 		       (if (not (pd.isnull row.their_connection_link))
 			   (do0
 			    (self.get_her_connections idx))))

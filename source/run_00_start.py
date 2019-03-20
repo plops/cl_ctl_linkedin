@@ -133,7 +133,7 @@ class LinkedIn(SeleniumMixin):
         self._connections.at[idx,"her_number_of_connections"]=number_of_connections
         self._connections.to_csv(str(self._connections_fn))
         res=[]
-        for p in range(1, ((1)+(number_of_pages))):
+        for p in [1]:
             if ( ((1)<(p)) ):
                 log("go to page {}/{}".format(p, number_of_pages))
                 self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))
@@ -141,7 +141,9 @@ class LinkedIn(SeleniumMixin):
             for e in elems:
                 link=e.find_element_by_xpath("//a").get_property("href")
                 name=e.find_element_by_xpath("//span[contains(@class,'actor-name')]").text
-                res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("page"):(p)})
+                job=e.find_element_by_xpath("//p[contains(@class,'subline-level-1')]/span").text
+                place=e.find_element_by_xpath("//p[contains(@class,'subline-level-2')]/span").text
+                res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("other_job"):(job),("other_place"):(place),("page"):(p)})
             fn="other_{:04d}_{}".format(idx, str(self._connections_fn))
             log("finished reading page, store in {}.".format(fn))
             pd.DataFrame(res).to_csv(fn)
@@ -150,7 +152,5 @@ class LinkedIn(SeleniumMixin):
         self._config=config
         self.open_linkedin()
         self._connections=self.get_connections()
-        for idx, row in self._connections.iterrows():
-            if ( not(pd.isnull(row.their_connection_link)) ):
-                self.get_her_connections(idx)
+        self.get_her_connections(0)
 l=LinkedIn(config.config)
