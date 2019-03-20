@@ -139,7 +139,7 @@ class LinkedIn(SeleniumMixin):
         self._connections.at[idx,"her_number_of_connections"]=number_of_connections
         self._connections.to_csv(str(self._connections_fn))
         res=[]
-        for p in [1]:
+        for p in range(1, ((1)+(number_of_pages))):
             if ( ((1)<(p)) ):
                 log("go to page {}/{}".format(p, number_of_pages))
                 self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))

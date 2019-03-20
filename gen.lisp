@@ -253,7 +253,7 @@
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//a").get_property('href')
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//span[contains(@class,'actor-name')]").text
 		  (setf res (list))
-		  (for (p (list 1); (range 1 (+ 1 number_of_pages))
+		  (for (p (range 1 (+ 1 number_of_pages))
 			  )
 		       (if (< 1 p)
 			   (do0
