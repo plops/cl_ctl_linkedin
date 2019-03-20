@@ -224,7 +224,7 @@
 					 (aref iloc idx)))
 		  (while True
 		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
-		     (log (string "scrolled down. wait for number of pages"))
+		     (log  (string "scrolled down. wait for number of pages"))
 		     (setf start (current_milli_time))
 		     (self.wait_xpath_clickable (string "//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span"))
 		     (if (< (- (current_milli_time) start) 120)
