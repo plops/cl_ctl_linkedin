@@ -124,9 +124,25 @@ class LinkedIn(SeleniumMixin):
         number_of_connections=int(self.selx("//h3[contains(@class,'search-results__total')]").text.split(" ")[1])
         self._connections.at[idx,"her_number_of_connections"]=number_of_connections
         self._connections.to_csv(str(self._connections_fn))
+        res=[]
+        for p in range(1, ((1)+(number_of_pages))):
+            if ( ((1)<(p)) ):
+                log("go to page {}/{}".format(p, number_of_pages))
+                self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))
+            elems=self.selxs("//ul[contains(@class,'search-results__list')]/li")
+            for e in elems:
+                link=e.find_element_by_xpath("//a").get_property("href")
+                name=e.find_element_by_xpath("//span[contains(@class,'actor-name')]").text
+                res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("page"):(p)})
+            fn="other_{:04d}_{}".format(idx, str(self._connections_fn))
+            log("finished reading page, store in {}.".format(fn))
+            pd.DataFrame(res).to_csv(fn)
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config
         self.open_linkedin()
         self._connections=self.get_connections()
+        for idx, row in self._connections.iterrows():
+            if ( not(pd.isnull(row.their_connection_link)) ):
+                self.get_her_connections(idx)
 l=LinkedIn(config.config)

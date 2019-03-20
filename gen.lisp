@@ -268,6 +268,10 @@
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
+		  (for ((ntuple idx row) (self._connections.iterrows))
+		       (if (not (pd.isnull row.their_connection_link))
+			   (do0
+			    (self.get_her_connections idx))))
  		))
 
 	 (setf l (LinkedIn config.config))
