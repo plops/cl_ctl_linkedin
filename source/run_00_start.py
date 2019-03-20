@@ -117,6 +117,13 @@ class LinkedIn(SeleniumMixin):
                 log("connections of {}: {}.".format(row.name, their_connection_link))
                 self._connections.at[idx,"their_connection_link"]=their_connection_link
                 self._connections.to_csv(str(self._connections_fn))
+    def get_her_connections(idx):
+        self._driver.get(self._connections["their_connection_link"].iloc[idx])
+        number_of_pages=int(self.selx(//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span).text)
+        self._connections.at[idx,"her_connection_number_of_pages"]=number_of_pages
+        number_of_connections=int(self.selx("//h3[contains(@class,'search-results__total')]").text.split(" ")[1])
+        self._connections.at[idx,"her_number_of_connections"]=number_of_connections
+        self._connections.to_csv(str(self._connections_fn))
     def __init__(self, config):
         SeleniumMixin.__init__(self)
         self._config=config

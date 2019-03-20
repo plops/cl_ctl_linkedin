@@ -219,9 +219,16 @@
 				      (format row.name their_connection_link)))
 			    (setf (aref self._connections.at idx (string "their_connection_link")) their_connection_link)
 			    (self._connections.to_csv (str self._connections_fn))))) )
-		(def get_their_connections (idx)
-		  ;l.selx("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span").text
-		  )
+		(def get_her_connections (idx)
+		  (self._driver.get (dot (aref self._connections (string "their_connection_link"))
+					 (aref iloc idx)))
+		  (setf number_of_pages (int (dot (self.selx "//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span") text))
+			(aref self._connections.at idx (string "her_connection_number_of_pages")) number_of_pages
+			number_of_connections (int (dot (self.selx (string "//h3[contains(@class,'search-results__total')]"))
+							text
+							(aref (split (string " ")) 1)))
+			(aref self._connections.at idx (string "her_number_of_connections")) number_of_connections)
+		  (self._connections.to_csv (str self._connections_fn)))
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
