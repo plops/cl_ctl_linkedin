@@ -232,8 +232,36 @@
 		  (self._connections.to_csv (str self._connections_fn))
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//a").get_property('href')
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//span[contains(@class,'actor-name')]").text
-
-		  )
+		  (setf res (list))
+		  (for (p (range 1 (+ 1 number_of_pages)))
+		       (if (< 1 p)
+			   (do0
+			    (log (dot (string "go to page {}/{}")
+				      (format p number_of_pages)))
+			    (self._driver.get (dot (string "{}&page={}")
+						   (format (dot (aref self._connections (string "their_connection_link"))
+								(aref iloc idx))
+							   p)))))
+		       (setf elems (self.selxs (string "//ul[contains(@class,'search-results__list')]/li")))
+		       (for (e elems)
+			    (setf link (dot e (find_element_by_xpath (string "//a"))
+					    (get_property (string "href")))
+				  name (dot e (find_element_by_xpath (string "//span[contains(@class,'actor-name')]"))
+					    text))
+			    (res.append (dict ((string "my_name") (aref self._connections.name.iloc idx))
+					      ((string "my_idx") idx)
+					      ((string "other_link") link)
+					      ((string "other_name") name)
+					      ((string "page") p))))
+		       (do0
+			(setf fn (dot (string "other_{:04d}_{}")
+					  (format
+					   idx
+					   (str self._connections_fn))))
+			(log (dot (string "finished reading page, store in {}.")
+				  (format fn)))
+			(dot (pd.DataFrame res)
+			     (to_csv fn)))))
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
