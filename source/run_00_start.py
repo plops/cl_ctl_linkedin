@@ -117,9 +117,17 @@ class LinkedIn(SeleniumMixin):
                 log("connections of {}: {}.".format(row.name, their_connection_link))
                 self._connections.at[idx,"their_connection_link"]=their_connection_link
                 self._connections.to_csv(str(self._connections_fn))
-    def get_her_connections(idx):
+    def get_her_connections(self, idx):
         self._driver.get(self._connections["their_connection_link"].iloc[idx])
-        number_of_pages=int(self.selx(//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span).text)
+        while (True):
+            self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+            log("scrolled down. wait for number of pages")
+            start=current_milli_time()
+            self.wait_xpath_clickable("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span")
+            if ( ((((current_milli_time())-(start)))<(120)) ):
+                log("seems to be immediatly there. i think we loaded everything.")
+                break
+        number_of_pages=int(self.selx("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span").text)
         self._connections.at[idx,"her_connection_number_of_pages"]=number_of_pages
         number_of_connections=int(self.selx("//h3[contains(@class,'search-results__total')]").text.split(" ")[1])
         self._connections.at[idx,"her_number_of_connections"]=number_of_connections
