@@ -107,7 +107,8 @@ class LinkedIn(SeleniumMixin):
         for s in self.selxs("//ul/li//a/span[contains (@class, 'card__name')]"):
             res.append({("name"):(s.find_element_by_xpath("../span[contains (@class, 'card__name')]").text),("link"):(s.find_element_by_xpath("..").get_attribute("href")),("occupation"):(s.find_element_by_xpath("../span[contains (@class, 'card__occupation')]").text)})
         return pd.DataFrame(res)
-    def get_their_connections(self):
+    def get_their_connection_link(self):
+        """add the link to the site with other peoples connections to the column self._connections.their_connection_link"""
         for idx, row in self._connections.iterrows():
             if ( pd.isnull(row.their_connection_link) ):
                 log("connection link of {} not yet known. try to get it.".format(row.name))
@@ -121,5 +122,4 @@ class LinkedIn(SeleniumMixin):
         self._config=config
         self.open_linkedin()
         self._connections=self.get_connections()
-        self.get_their_connections()
 l=LinkedIn(config.config)

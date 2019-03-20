@@ -204,8 +204,8 @@
 				      (find_element_by_xpath (string "../span[contains (@class, 'card__occupation')]"))
 				      text)))))
 		    (return (pd.DataFrame res)))
-		(def get_their_connections (self)
-		  ;;l.selx("//span[contains(@class,'section__connections')]/..").get_property('href')
+		(def get_their_connection_link (self)
+		  (string3 "add the link to the site with other peoples connections to the column self._connections.their_connection_link")
 		  (for ((ntuple idx row) (self._connections.iterrows))
 		       (if (pd.isnull row.their_connection_link)
 			   (do0
@@ -219,12 +219,15 @@
 				      (format row.name their_connection_link)))
 			    (setf (aref self._connections.at idx (string "their_connection_link")) their_connection_link)
 			    (self._connections.to_csv (str self._connections_fn))))) )
+		(def get_their_connections (idx)
+		  ;l.selx("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span").text
+		  )
 		(def __init__ (self config)
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
-		  (self.get_their_connections)
+		  #+nil(self.get_their_connection_link)
  		))
 
 	 (setf l (LinkedIn config.config))
