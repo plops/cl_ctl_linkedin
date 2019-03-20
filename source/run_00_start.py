@@ -41,7 +41,7 @@ class SeleniumMixin(object):
         log("SeleniumMixin::__init__")
         profile=selenium.webdriver.FirefoxProfile()
         profile.set_preference("permissions.default.image", 2)
-        self._driver=selenium.webdriver.Firefox(firefox_profile=profile)
+        self._driver=selenium.webdriver.Firefox()
         self._wait=selenium.webdriver.support.wait.WebDriverWait(self._driver, 5)
         log("SeleniumMixin::__init__ finished")
     def sel(self, css):
@@ -82,6 +82,7 @@ class LinkedIn(SeleniumMixin):
         self.sel("#login-password").send_keys(self._config["linkedin_password"])
         self.sel("#login-submit").click()
     def get_connections(self):
+        log("get_connections")
         self._driver.get("https://www.linkedin.com/mynetwork/invite-connect/connections/")
         self._connections_fn=pathlib.Path("connections.csv")
         if ( self._connections_fn.exists() ):
@@ -111,6 +112,7 @@ class LinkedIn(SeleniumMixin):
         return pd.DataFrame(res)
     def get_their_connection_link(self):
         """add the link to the site with other peoples connections to the column self._connections.their_connection_link"""
+        log("get_their_connection_link")
         for idx, row in self._connections.iterrows():
             if ( pd.isnull(row.their_connection_link) ):
                 log("connection link of {} not yet known. try to get it.".format(row.name))
@@ -120,7 +122,9 @@ class LinkedIn(SeleniumMixin):
                 self._connections.at[idx,"their_connection_link"]=their_connection_link
                 self._connections.to_csv(str(self._connections_fn))
     def get_her_connections(self, idx):
-        self._driver.get(self._connections["their_connection_link"].iloc[idx])
+        url=self._connections["their_connection_link"].iloc[idx]
+        log("get_her_connections: get {}".format(url))
+        self._driver.get(url)
         while (True):
             self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
             log("scrolled down. wait for number of pages")
@@ -141,10 +145,19 @@ class LinkedIn(SeleniumMixin):
                 self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))
             elems=self.selxs("//ul[contains(@class,'search-results__list')]/li")
             for e in elems:
-                link=e.find_element_by_xpath("./div/div/div/a").get_property("href")
-                name=e.find_element_by_xpath(".//span[contains(@class,'actor-name')]").text
-                job=e.find_element_by_xpath(".//p[contains(@class,'subline-level-1')]/span").text
-                place=e.find_element_by_xpath(".//p[contains(@class,'subline-level-2')]/span").text
+                link=None
+                name=None
+                job=None
+                place=None
+                try:
+                    link=e.find_element_by_xpath(".//a").get_property("href")
+                    name=e.find_element_by_xpath(".//span[contains(@class,'actor-name')]").text
+                    job=e.find_element_by_xpath(".//p[contains(@class,'subline-level-1')]/span").text
+                    place=e.find_element_by_xpath(".//p[contains(@class,'subline-level-2')]/span").text
+                except Exception as e:
+                    warn("e={}".format(str(e)))
+                    pass
+                log("name={} job={} place={}.".format(name, job, place))
                 res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("other_job"):(job),("other_place"):(place),("page"):(p)})
             fn="other_{:04d}_{}".format(idx, str(self._connections_fn))
             log("finished reading page, store in {}.".format(fn))
@@ -153,8 +166,8 @@ class LinkedIn(SeleniumMixin):
         SeleniumMixin.__init__(self)
         self._config=config
         self.open_linkedin()
-        try:
-            self.get_her_connections(0)
-        except Exception as e:
-            pass
+        self._connections=self.get_connections()
+        for idx, row in self._connections.iterrows():
+            if ( not(pd.isnull(row.their_connection_link)) ):
+                self.get_her_connections(idx)
 l=LinkedIn(config.config)

@@ -99,7 +99,8 @@
 		   (setf profile (selenium.webdriver.FirefoxProfile))
 		   (profile.set_preference (string "permissions.default.image") 2))
 		  (setf self._driver (dot selenium.webdriver
-					  #+firefox (Firefox :firefox_profile profile)
+					  #+firefox (Firefox ;:firefox_profile profile
+						     )
 					  #+chrome (Chrome)
 				      )
 			self._wait (selenium.webdriver.support.wait.WebDriverWait self._driver 5))
@@ -158,6 +159,7 @@
 		   (dot (self.sel  (string "#login-submit")) (click))))
 
 		(def get_connections (self)
+		  (log (string "get_connections"))
 		  (self._driver.get (string "https://www.linkedin.com/mynetwork/invite-connect/connections/"))
 		  (setf self._connections_fn (pathlib.Path (string "connections.csv")))
 		  (if (dot self._connections_fn (exists))
@@ -210,6 +212,7 @@
 		    (return (pd.DataFrame res)))
 		(def get_their_connection_link (self)
 		  (string3 "add the link to the site with other peoples connections to the column self._connections.their_connection_link")
+		  (log (string "get_their_connection_link"))
 		  (for ((ntuple idx row) (self._connections.iterrows))
 		       (if (pd.isnull row.their_connection_link)
 			   (do0
@@ -224,8 +227,11 @@
 			    (setf (aref self._connections.at idx (string "their_connection_link")) their_connection_link)
 			    (self._connections.to_csv (str self._connections_fn))))) )
 		(def get_her_connections (self idx)
-		  (self._driver.get (dot (aref self._connections (string "their_connection_link"))
+		  (setf url (dot (aref self._connections (string "their_connection_link"))
 					 (aref iloc idx)))
+		  (log (dot (string "get_her_connections: get {}")
+			    (format url)))
+		  (self._driver.get url)
 		  (while True
 		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
 		     (log  (string "scrolled down. wait for number of pages"))
@@ -262,14 +268,25 @@
 		       ;; document.evaluate( 'count(//p)', b[9], null, XPathResult.ANY_TYPE, null );
 		       (setf elems (self.selxs (string "//ul[contains(@class,'search-results__list')]/li")))
 		       (for (e elems) ;; FIXME: i don't think this is iterating all the list elements
-			    (setf link (dot e (find_element_by_xpath (string "./div/div/div/a"))
-					    (get_property (string "href")))
-				  name (dot e (find_element_by_xpath (string ".//span[contains(@class,'actor-name')]"))
+			    (setf link None
+				  name None
+				  job None
+				  place None)
+			    (try
+			     (setf link (dot e (find_element_by_xpath (string ".//a"))
+					     (get_property (string "href")))
+				   name (dot e (find_element_by_xpath (string ".//span[contains(@class,'actor-name')]"))
+					     text)
+				   job (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-1')]/span"))
 					    text)
-				  job (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-1')]/span"))
-					   text)
-				  place (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-2')]/span"))
-					   text))
+				   place (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-2')]/span"))
+					      text))
+			     ("Exception as e"
+			      (warn (dot (string "e={}")
+					 (format (str e))))
+			      pass))
+			    (log (dot (string "name={} job={} place={}.")
+				      (format name job place)))
 			    (res.append (dict ((string "my_name") (aref self._connections.name.iloc idx))
 					      ((string "my_idx") idx)
 					      ((string "other_link") link)
@@ -290,13 +307,13 @@
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
-		  #+nil(setf self._connections (self.get_connections))
+		  (setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
-		  (try
+		  #+nil (try
 		   (self.get_her_connections 0)
 		   ("Exception as e"
 		    pass))
-		  #+nil(for ((ntuple idx row) (self._connections.iterrows))
+		  (for ((ntuple idx row) (self._connections.iterrows))
 		       (if (not (pd.isnull row.their_connection_link))
 			   (do0
 			    (self.get_her_connections idx))))
