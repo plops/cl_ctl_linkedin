@@ -129,7 +129,7 @@ class LinkedIn(SeleniumMixin):
                 break
         number_of_pages=int(self.selx("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span").text)
         self._connections.at[idx,"her_connection_number_of_pages"]=number_of_pages
-        number_of_connections=int(self.selx("//h3[contains(@class,'search-results__total')]").text.split(" ")[1])
+        number_of_connections=int(self.selx("//h3[contains(@class,'search-results__total')]").text.split(" ")[1].replace(",", ""))
         self._connections.at[idx,"her_number_of_connections"]=number_of_connections
         self._connections.to_csv(str(self._connections_fn))
         res=[]

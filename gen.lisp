@@ -235,7 +235,8 @@
 			(aref self._connections.at idx (string "her_connection_number_of_pages")) number_of_pages
 			number_of_connections (int (dot (self.selx (string "//h3[contains(@class,'search-results__total')]"))
 							text
-							(aref (split (string " ")) 1)))
+							(aref (split (string " ")) 1)
+							(replace (string ",") (string ""))))
 			(aref self._connections.at idx (string "her_number_of_connections")) number_of_connections)
 		  
 		  (self._connections.to_csv (str self._connections_fn))
@@ -252,7 +253,7 @@
 								(aref iloc idx))
 							   p)))))
 		       (setf elems (self.selxs (string "//ul[contains(@class,'search-results__list')]/li")))
-		       (for (e elems)
+		       (for (e elems) ;; FIXME: i don't think this is iterating all the list elements
 			    (setf link (dot e (find_element_by_xpath (string "//a"))
 					    (get_property (string "href")))
 				  name (dot e (find_element_by_xpath (string "//span[contains(@class,'actor-name')]"))
