@@ -143,6 +143,14 @@ class LinkedIn(SeleniumMixin):
             if ( ((1)<(p)) ):
                 log("go to page {}/{}".format(p, number_of_pages))
                 self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))
+                while (True):
+                    self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+                    log("scrolled down. wait for number of pages")
+                    start=current_milli_time()
+                    self.wait_xpath_clickable("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span")
+                    if ( ((((current_milli_time())-(start)))<(120)) ):
+                        log("seems to be immediatly there. i think we loaded everything.")
+                        break
             elems=self.selxs("//ul[contains(@class,'search-results__list')]/li")
             for e in elems:
                 link=None

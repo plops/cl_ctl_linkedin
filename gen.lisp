@@ -262,7 +262,16 @@
 			    (self._driver.get (dot (string "{}&page={}")
 						   (format (dot (aref self._connections (string "their_connection_link"))
 								(aref iloc idx))
-							   p)))))
+							   p)))
+			    (while True
+			      (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+			      (log  (string "scrolled down. wait for number of pages"))
+			      (setf start (current_milli_time))
+			      (self.wait_xpath_clickable (string "//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span"))
+			      (if (< (- (current_milli_time) start) 120)
+				  (do0
+				   (log (string "seems to be immediatly there. i think we loaded everything."))
+				   break)))))
 		       ;; in javascript console
 		       ;; b = $x(("//ul[contains(@class,'search-results__list')]/li"))
 		       ;; document.evaluate( 'count(//p)', b[9], null, XPathResult.ANY_TYPE, null );
