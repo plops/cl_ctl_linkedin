@@ -94,8 +94,12 @@
 	 (class SeleniumMixin (object)
 		(def __init__ (self)
 		  (log (string "SeleniumMixin::__init__"))
+		  #+firefox
+		  (do0
+		   (setf profile (selenium.webdriver.FirefoxProfile))
+		   (profile.set_preference (string "permissions.default.image") 2))
 		  (setf self._driver (dot selenium.webdriver
-					  #+firefox (Firefox)
+					  #+firefox (Firefox :firefox_profile profile)
 					  #+chrome (Chrome)
 				      )
 			self._wait (selenium.webdriver.support.wait.WebDriverWait self._driver 5))
@@ -258,7 +262,7 @@
 		       ;; document.evaluate( 'count(//p)', b[9], null, XPathResult.ANY_TYPE, null );
 		       (setf elems (self.selxs (string "//ul[contains(@class,'search-results__list')]/li")))
 		       (for (e elems) ;; FIXME: i don't think this is iterating all the list elements
-			    (setf link (dot e (find_element_by_xpath (string ".//a"))
+			    (setf link (dot e (find_element_by_xpath (string "./div/div/div/a"))
 					    (get_property (string "href")))
 				  name (dot e (find_element_by_xpath (string ".//span[contains(@class,'actor-name')]"))
 					    text)
@@ -286,9 +290,12 @@
 		  (SeleniumMixin.__init__ self)
 		  (setf self._config config)
 		  (self.open_linkedin)
-		  (setf self._connections (self.get_connections))
+		  #+nil(setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
-		  (self.get_her_connections 0)
+		  (try
+		   (self.get_her_connections 0)
+		   ("Exception as e"
+		    pass))
 		  #+nil(for ((ntuple idx row) (self._connections.iterrows))
 		       (if (not (pd.isnull row.their_connection_link))
 			   (do0
