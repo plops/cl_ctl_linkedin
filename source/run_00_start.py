@@ -73,6 +73,24 @@ class SeleniumMixin(object):
     def waitselx(self, xpath):
         self.wait_xpath_clickable(xpath)
         return self.selx(xpath)
+    def current_scroll_height(self):
+        h=self._driver.execute_script("return document.body.scrollHeight")
+        log("scroll_height={}".format(h))
+        return h
+    def current_client_height(self):
+        h=self._driver.execute_script("return document.body.clientHeight")
+        log("client_height={}".format(h))
+        return h
+    def incrementally_scroll_down(self, pause_time=(2.0000000298023224e-1)):
+        last_height=self.current_scroll_height()
+        while (True):
+            self._driver.execute_script("window.scrollTo(0, {});".format(((last_height)+(self.current_client_height()))))
+            time.sleep(pause_time)
+            new_height=self.current_scroll_height()
+            if ( ((new_height)==(last_height)) ):
+                log("reached end of page.")
+                break
+            last_height=new_height
 class LinkedIn(SeleniumMixin):
     def open_linkedin(self):
         site="https://linkedin.com"
@@ -96,8 +114,7 @@ class LinkedIn(SeleniumMixin):
                 log("the stored file contains {} connections. the website contains {}. load from website".format(len(df), page_connections_number))
         try:
             while (True):
-                self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-                log("scrolled down.")
+                self.incrementally_scroll_down()
                 start=current_milli_time()
                 self.wait_xpath_gone("//div[@class='artdeco-spinner']")
                 if ( ((((current_milli_time())-(start)))<(120)) ):
@@ -126,8 +143,8 @@ class LinkedIn(SeleniumMixin):
         log("get_her_connections: get {}".format(url))
         self._driver.get(url)
         while (True):
-            self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-            log("scrolled down. wait for number of pages")
+            self.incrementally_scroll_down()
+            log("wait for number of pages")
             start=current_milli_time()
             self.wait_xpath_clickable("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span")
             if ( ((((current_milli_time())-(start)))<(120)) ):
@@ -144,7 +161,7 @@ class LinkedIn(SeleniumMixin):
                 log("go to page {}/{}".format(p, number_of_pages))
                 self._driver.get("{}&page={}".format(self._connections["their_connection_link"].iloc[idx], p))
                 while (True):
-                    self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+                    self.incrementally_scroll_down()
                     log("scrolled down. wait for number of pages")
                     start=current_milli_time()
                     self.wait_xpath_clickable("//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span")
@@ -162,11 +179,12 @@ class LinkedIn(SeleniumMixin):
                     name=e.find_element_by_xpath(".//span[contains(@class,'actor-name')]").text
                     job=e.find_element_by_xpath(".//p[contains(@class,'subline-level-1')]/span").text
                     place=e.find_element_by_xpath(".//p[contains(@class,'subline-level-2')]/span").text
+                    img_src=e.find_element_by_xpath(".//img").get_property("src")
                 except Exception as e:
                     warn("e={}".format(str(e)))
                     pass
                 log("name={} job={} place={}.".format(name, job, place))
-                res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("other_job"):(job),("other_place"):(place),("page"):(p)})
+                res.append({("my_name"):(self._connections.name.iloc[idx]),("my_idx"):(idx),("other_link"):(link),("other_name"):(name),("other_job"):(job),("other_place"):(place),("other_img_src"):(img_src),("page"):(p)})
             fn="other_{:04d}_{}".format(idx, str(self._connections_fn))
             log("finished reading page, store in {}.".format(fn))
             pd.DataFrame(res).to_csv(fn)

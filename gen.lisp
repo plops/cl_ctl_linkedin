@@ -148,16 +148,18 @@
 			    (format h)))
 		  (return h))
 		(def current_client_height (self)
-		  (setf h (self._driver.execute_script (string "return document.body.clientHeight")))
+		  (setf h
+			(self._driver.execute_script (string "return document.body.clientHeight"))
+			)
 		  (log (dot (string "client_height={}")
 			    (format h)))
 		  (return h))
 		(def incrementally_scroll_down (self &key (pause_time .2))
 		  (setf last_height (self.current_scroll_height))
 		  (while True
-		    (self.current_client_height)
-		    (self._driver.execute_script (dot (string "window.scrollTo(0, {}+document.body.clientHeight);")
-						      (format last_height)))
+		    
+		    (self._driver.execute_script (dot (string "window.scrollTo(0, {});")
+						      (format (+ last_height (self.current_client_height)))))
 		    (time.sleep pause_time)
 		    (setf new_height (self.current_scroll_height))
 		    (if (== new_height last_height)
@@ -274,8 +276,9 @@
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//a").get_property('href')
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//span[contains(@class,'actor-name')]").text
 		  (setf res (list))
-		  (for (p ;(range 1 (+ 1 number_of_pages))
-			  (list 1))
+		  (for (p (range 1 (+ 1 number_of_pages))
+			  ;(list 1)
+			)
 		       (if (< 1 p)
 			   (do0
 			    (log (dot (string "go to page {}/{}")
@@ -343,11 +346,11 @@
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
-		  (try
+		  #+nil(try
 		   (self.get_her_connections 0)
 		   ("Exception as e"
 		    pass))
-		  #+nil (for ((ntuple idx row) (self._connections.iterrows))
+		  (for ((ntuple idx row) (self._connections.iterrows))
 		       (if (not (pd.isnull row.their_connection_link))
 			   (do0
 			    (self.get_her_connections idx))))
