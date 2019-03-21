@@ -6,4 +6,4 @@
 - perhaps eventually import into https://franz.com/agraph/downloads/server
 
 * Selenium Tricks
-- https://blog.codeship.com/get-selenium-to-wait-for-page-load/ wait for staleness of element from old page to see if new dom has loaded
+- https://blog.codeship.com/get-selenium-to-wait-for-page-load/ wait for staleness of element from old page to see if new dom has loaded (i don't currently use that)
