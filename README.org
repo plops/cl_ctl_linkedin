@@ -4,3 +4,6 @@
 - use selenium to download linkedin connections
 - store data in csv files
 - perhaps eventually import into https://franz.com/agraph/downloads/server
+
+* Selenium Tricks
+- https://blog.codeship.com/get-selenium-to-wait-for-page-load/ wait for staleness of element from old page to see if new dom has loaded
