@@ -141,10 +141,31 @@
 		  (return (self.sel css)))
 		(def waitselx (self xpath)
 		  (self.wait_xpath_clickable xpath)
-		  (return (self.selx xpath))))
+		  (return (self.selx xpath)))
+		(def current_scroll_height (self)
+		  (setf h (self._driver.execute_script (string "return document.body.scrollHeight")))
+		  (log (dot (string "scroll_height={}")
+			    (format h)))
+		  (return h))
+		(def current_client_height (self)
+		  (setf h (self._driver.execute_script (string "return document.body.clientHeight")))
+		  (log (dot (string "client_height={}")
+			    (format h)))
+		  (return h))
+		(def incrementally_scroll_down (self &key (pause_time .2))
+		  (setf last_height (self.current_scroll_height))
+		  (while True
+		    (self.current_client_height)
+		    (self._driver.execute_script (dot (string "window.scrollTo(0, {}+document.body.clientHeight);")
+						      (format last_height)))
+		    (time.sleep pause_time)
+		    (setf new_height (self.current_scroll_height))
+		    (if (== new_height last_height)
+			(do0
+			 (log (string "reached end of page."))
+			 break))
+		    (setf last_height new_height))))
 	 
-	 
-
 	 (class LinkedIn (SeleniumMixin)
 		(def open_linkedin (self)
 		  (do0
@@ -181,8 +202,9 @@
 		  
 		  (try
 		   (while True
-		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
-		     (log (string "scrolled down."))
+		     (self.incrementally_scroll_down)
+		     ;(self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+		     ;(log (string "scrolled down."))
 		     (setf start (current_milli_time))
 		     (self.wait_xpath_gone (string "//div[@class='artdeco-spinner']"))
 		     (if (< (- (current_milli_time) start) 120)
@@ -231,8 +253,9 @@
 			    (format url)))
 		  (self._driver.get url)
 		  (while True
-		     (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
-		     (log  (string "scrolled down. wait for number of pages"))
+		    (self.incrementally_scroll_down)
+		     ;(self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+		     (log  (string "wait for number of pages"))
 		     (setf start (current_milli_time))
 		     (self.wait_xpath_clickable (string "//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span"))
 		     (if (< (- (current_milli_time) start) 120)
@@ -251,8 +274,8 @@
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//a").get_property('href')
 		  ;; l.selxs("//ul[contains(@class,'search-results__list')]/li")[0].find_element_by_xpath("//span[contains(@class,'actor-name')]").text
 		  (setf res (list))
-		  (for (p (range 1 (+ 1 number_of_pages))
-			  )
+		  (for (p ;(range 1 (+ 1 number_of_pages))
+			  (list 1))
 		       (if (< 1 p)
 			   (do0
 			    (log (dot (string "go to page {}/{}")
@@ -262,7 +285,8 @@
 								(aref iloc idx))
 							   p)))
 			    (while True
-			      (self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
+			      (self.incrementally_scroll_down)
+			      ;(self._driver.execute_script (string "window.scrollTo(0, document.body.scrollHeight)"))
 			      (log  (string "scrolled down. wait for number of pages"))
 			      (setf start (current_milli_time))
 			      (self.wait_xpath_clickable (string "//li[@class='artdeco-pagination__indicator artdeco-pagination__indicator--number '][last()]/button/span"))
@@ -287,7 +311,9 @@
 				   job (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-1')]/span"))
 					    text)
 				   place (dot e (find_element_by_xpath (string ".//p[contains(@class,'subline-level-2')]/span"))
-					      text))
+					      text)
+				   img_src (dot e (find_element_by_xpath (string ".//img"))
+					      (get_property (string "src"))))
 			     ("Exception as e"
 			      (warn (dot (string "e={}")
 					 (format (str e))))
@@ -300,6 +326,7 @@
 					      ((string "other_name") name)
 					      ((string "other_job") job)
 					      ((string "other_place") place)
+					      ((string "other_img_src") img_src)
 					      ((string "page") p))))
 		       (do0
 			(setf fn (dot (string "other_{:04d}_{}")
@@ -316,11 +343,11 @@
 		  (self.open_linkedin)
 		  (setf self._connections (self.get_connections))
 		  #+nil(self.get_their_connection_link)
-		  #+nil (try
+		  (try
 		   (self.get_her_connections 0)
 		   ("Exception as e"
 		    pass))
-		  (for ((ntuple idx row) (self._connections.iterrows))
+		  #+nil (for ((ntuple idx row) (self._connections.iterrows))
 		       (if (not (pd.isnull row.their_connection_link))
 			   (do0
 			    (self.get_her_connections idx))))

@@ -7,3 +7,5 @@
 
 * Selenium Tricks
 - https://blog.codeship.com/get-selenium-to-wait-for-page-load/ wait for staleness of element from old page to see if new dom has loaded (i don't currently use that)
+- https://github.com/austinoboyle/scrape-linkedin-selenium more sophisticated scraper, he incrementally scrolls through page
+- https://towardsdatascience.com/web-scraping-using-selenium-836de8677ae5 incremental scroll
