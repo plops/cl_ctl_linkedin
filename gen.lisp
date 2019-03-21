@@ -377,7 +377,7 @@
 				      (find_element_by_xpath (string "//span[contains (@class, 'card__occupation')]"))
 				      (text))))))
 		    (return res)))))
-
+ 
 ;; # click on one of my connections (iterate through those, get name and link)
 ;; self.sel('li.list-style-none').click()
 ;; # listing "People also viewed" (iterate through those, get name, position, affiliation)
